@@ -11,6 +11,7 @@ import com.example.AuthService.repositories.UserRepository;
 import com.example.AuthService.services.UserService;
 import com.example.AuthService.utils.JwtUtils;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final BCryptPasswordEncoder passwordEncoder;
@@ -39,6 +41,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ResponseEntity<?> registerUser(RegisterUserRequest registerUserRequest) throws RoleNotFoundException {
+        log.info("Service register user is started");
+
         String email = registerUserRequest.getEmail();
         String username = registerUserRequest.getUsername();
         String password = registerUserRequest.getPassword();
@@ -67,6 +71,19 @@ public class UserServiceImpl implements UserService {
         }
         String password_encoded = passwordEncoder.encode(password);
 
+        if (roleRepository.findByName("ROLE_USER").isEmpty()){
+            Role role = Role.builder()
+                            .name("ROLE_USER")
+                            .build();
+            roleRepository.save(role);
+        }
+
+        if (roleRepository.findByName("ROLE_ADMIN").isEmpty()){
+            Role role = Role.builder()
+                    .name("ROLE_ADMIN")
+                    .build();
+            roleRepository.save(role);
+        }
 
         User user = new User();
         user.setEmail(email);
@@ -74,6 +91,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(password_encoded);
         user.setRoles(List.of(addRoleToUser("ROLE_USER")));
         userRepository.save(user);
+
+        log.info("Service register user is successfully completed");
         return ResponseEntity.ok().build();
     }
 
@@ -84,8 +103,8 @@ public class UserServiceImpl implements UserService {
     private boolean isValidEmail(String email){
         return !email.isEmpty() && email.matches("^[\\w-\\.]+@[\\w-]+(\\.[\\w-]+)*\\.[a-z]{2,}$");
     }
-    private Role addRoleToUser(String RoleName) throws RoleNotFoundException {
-        return roleRepository.findByName(RoleName).orElseThrow(() -> new RoleNotFoundException("Role not found"));
+    private Role addRoleToUser(String roleName) throws RoleNotFoundException {
+        return roleRepository.findByName(roleName).orElseThrow(() -> new RoleNotFoundException("Role not found"));
     }
     private boolean isContainsUpperCase(String s){
         for(char c : s.toCharArray()){

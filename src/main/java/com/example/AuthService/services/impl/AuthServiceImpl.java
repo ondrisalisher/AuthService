@@ -6,6 +6,7 @@ import com.example.AuthService.exceptions.AppError;
 import com.example.AuthService.services.AuthService;
 import com.example.AuthService.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
@@ -23,6 +25,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseEntity<?> authUser(AuthUserRequest authUserRequest) {
+        log.info("Service auth user is started");
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -32,7 +36,11 @@ public class AuthServiceImpl implements AuthService {
         } catch (BadCredentialsException e){
             return new ResponseEntity<>(new AppError(HttpStatus.UNAUTHORIZED.value(), "Wrong username or password"), HttpStatus.UNAUTHORIZED);
         }
+
         String token = jwtUtils.generateToken(userDetailsService.loadUserByUsername(authUserRequest.getUsername()));
+
+        log.info("Service auth user is successfully completed");
+
         return ResponseEntity.ok(new JwtResponse(token));
     }
 }

@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:16.4
     environment:
-      POSTGRES_DB: notes_db
+      POSTGRES_DB: tasker_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 0102
     ports:

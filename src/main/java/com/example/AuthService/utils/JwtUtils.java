@@ -1,8 +1,11 @@
 package com.example.AuthService.utils;
 
+import com.example.AuthService.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,9 +22,10 @@ import java.util.stream.Collectors;
 public class JwtUtils {
     @Value("${jwt.secret}")
     private String secret;
-
     @Value("${jwt.lifetime}")
     private Duration lifetime;
+    @Autowired
+    private UserRepository userRepository;
 
     public String generateToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
@@ -32,7 +36,8 @@ public class JwtUtils {
         Date expiresDate = new Date(issuedDate.getTime() + lifetime.toMillis());
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(String.valueOf(userRepository.findByUsername(userDetails.getUsername()).get().getId()))
+//                .setSubject(userDetails.getUsername())
                 .setIssuedAt(issuedDate)
                 .setExpiration(expiresDate)
                 .signWith(SignatureAlgorithm.HS256, secret)
